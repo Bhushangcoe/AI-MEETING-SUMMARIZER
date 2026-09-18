@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>MeetingAI</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/styles.css') }}"
+    >
+</head>
+
+<body>
+
+<div class="app-shell">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+
+        <div class="brand">
+            <div class="brand-mark">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+
+            <div>
+                <div class="brand-name">Meeting<span>AI</span></div>
+                <div class="brand-subtitle">Intelligent meeting assistant</div>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+
+            <button class="nav-item active" data-page="dashboardPage">
+                <span class="nav-icon">⌂</span>
+                <span>Dashboard</span>
+            </button>
+
+            <button class="nav-item" data-page="meetingsPage">
+                <span class="nav-icon">▣</span>
+                <span>Meetings</span>
+            </button>
+
+            <button class="nav-item" data-page="searchPage">
+                <span class="nav-icon">⌕</span>
+                <span>Search</span>
+            </button>
+
+            <button class="nav-item" data-page="reportsPage">
+                <span class="nav-icon">▤</span>
+                <span>Reports</span>
+            </button>
+
+        </nav>
+
+        <div class="sidebar-bottom">
+
+            <div class="system-status">
+                <span class="status-dot"></span>
+
+                <div>
+                    <strong>AI Engine Online</strong>
+                    <small>Whisper + Llama</small>
+                </div>
+            </div>
+
+            <div class="sidebar-version">
+                MeetingAI v1.0
+            </div>
+
+        </div>
+
+    </aside>
+
+
+    <!-- MAIN -->
+    <main class="main-content">
+
+        <!-- TOP BAR -->
+        <header class="topbar">
+
+            <div>
+                <div class="topbar-label">WORKSPACE</div>
+                <h1 id="pageTitle">Meeting Dashboard</h1>
+            </div>
+
+            <div class="topbar-right">
+
+                <div class="engine-pill">
+                    <span class="pulse-dot"></span>
+                    Local AI
+                </div>
+
+                <div class="avatar">
+                    B
+                </div>
+
+            </div>
+
+        </header>
+
+
+        <!-- ================================================= -->
+        <!-- DASHBOARD -->
+        <!-- ================================================= -->
+
+        <section
+            id="dashboardPage"
+            class="page active-page"
+        >
+
+            <!-- HERO -->
+            <div class="hero-section">
+
+                <div class="hero-content">
+
+                    <div class="eyebrow">
+                        <span></span>
+                        AI MEETING INTELLIGENCE
+                    </div>
+
+                    <h2>
+                        Turn conversations<br>
+                        into <em>clarity.</em>
+                    </h2>
+
+                    <p>
+                        Capture your meeting audio, transcribe it in real time,
+                        and let AI transform the conversation into structured
+                        insights.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <!-- RECORDING PANEL -->
+            <div class="recording-stage">
+
+                <div class="recording-header">
+
+                    <div>
+                        <span class="section-label">LIVE SESSION</span>
+                        <h3>Meeting Recorder</h3>
+                    </div>
+
+                    <div
+                        id="statusBadge"
+                        class="session-status idle"
+                    >
+                        <span></span>
+                        <label id="status">Ready</label>
+                    </div>
+
+                </div>
+
+
+                <div class="recording-core">
+
+                    <div
+                        id="recordingGlow"
+                        class="recording-glow"
+                    ></div>
+
+                    <div
+                        id="recordButton"
+                        class="record-button"
+                    >
+
+                        <div class="record-button-inner">
+                            <span class="mic-symbol">●</span>
+                        </div>
+
+                    </div>
+
+                    <div class="recording-text">
+
+                        <h4 id="recordTitle">
+                            Ready to record
+                        </h4>
+
+                        <p id="recordDescription">
+                            Share a browser tab or screen with audio to begin.
+                        </p>
+
+                    </div>
+
+                    <!-- WAVEFORM -->
+                    <div
+                        id="waveform"
+                        class="waveform"
+                    >
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+
+                    <div class="timer" id="timer">
+                        00:00
+                    </div>
+
+                    <div class="record-controls">
+
+                        <button
+                            id="startButton"
+                            class="primary-record-btn"
+                        >
+                            <span class="btn-dot"></span>
+                            Start Meeting
+                        </button>
+
+                        <button
+                            id="stopButton"
+                            class="stop-record-btn"
+                            disabled
+                        >
+                            Stop Meeting
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- LIVE WORKSPACE -->
+            <div class="workspace-grid">
+
+                <!-- TRANSCRIPT -->
+                <div class="workspace-panel transcript-panel">
+
+                    <div class="panel-heading">
+
+                        <div>
+                            <span class="panel-icon transcript-icon">Aa</span>
+
+                            <div>
+                                <span class="section-label">
+                                    LIVE CAPTURE
+                                </span>
+
+                                <h3>Transcript</h3>
+                            </div>
+                        </div>
+
+                        <span
+                            id="transcriptState"
+                            class="live-label"
+                        >
+                            WAITING
+                        </span>
+
+                    </div>
+
+                    <div
+                        id="transcript"
+                        class="transcript-area"
+                    >
+
+                        <div class="empty-transcript">
+
+                            <div class="empty-icon">
+                                ◌
+                            </div>
+
+                            <h4>Your conversation will appear here</h4>
+
+                            <p>
+                                Start a meeting and MeetingAI will
+                                transcribe the shared audio automatically.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- SUMMARY -->
+                <div class="workspace-panel summary-panel">
+
+                    <div class="panel-heading">
+
+                        <div>
+                            <span class="panel-icon ai-icon">✦</span>
+
+                            <div>
+                                <span class="section-label">
+                                    INTELLIGENCE
+                                </span>
+
+                                <h3>AI Summary</h3>
+                            </div>
+                        </div>
+
+                        <span class="ai-badge">
+                            Llama AI
+                        </span>
+
+                    </div>
+
+                    <div
+                        id="summary"
+                        class="summary-area"
+                    >
+
+                        <div class="empty-summary">
+
+                            <div class="ai-orbit">
+                                <div>✦</div>
+                            </div>
+
+                            <h4>Waiting for your meeting</h4>
+
+                            <p>
+                                Once your meeting ends, AI will extract
+                                the important information automatically.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ================================================= -->
+        <!-- MEETINGS -->
+        <!-- ================================================= -->
+
+        <section
+            id="meetingsPage"
+            class="page"
+        >
+
+            <div class="page-intro">
+
+                <div>
+                    <span class="section-label">ARCHIVE</span>
+
+                    <h2>Your Meetings</h2>
+
+                    <p>
+                        Every processed meeting, transcript and AI report
+                        in one place.
+                    </p>
+                </div>
+
+                <button
+                    id="refreshMeetings"
+                    class="secondary-btn"
+                >
+                    ↻ Refresh
+                </button>
+
+            </div>
+
+            <div
+                id="meetingsList"
+                class="meetings-grid"
+            >
+
+                <div class="loading-state">
+                    Loading meetings...
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ================================================= -->
+        <!-- SEARCH -->
+        <!-- ================================================= -->
+
+        <section
+            id="searchPage"
+            class="page"
+        >
+
+            <div class="page-intro">
+
+                <div>
+                    <span class="section-label">DISCOVER</span>
+
+                    <h2>Search Meetings</h2>
+
+                    <p>
+                        Search across transcripts, meeting titles and AI summaries.
+                    </p>
+                </div>
+
+            </div>
+
+            <div class="search-box">
+
+                <span class="search-symbol">⌕</span>
+
+                <input
+                    id="searchInput"
+                    type="text"
+                    placeholder="Search conversations, topics, people..."
+                >
+
+                <button id="searchButton">
+                    Search
+                </button>
+
+            </div>
+
+            <div
+                id="searchResults"
+                class="search-results"
+            >
+
+                <div class="search-placeholder">
+                    <div>⌕</div>
+                    <h3>Search your meeting memory</h3>
+                    <p>
+                        Enter a keyword to find conversations and reports.
+                    </p>
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ================================================= -->
+        <!-- REPORTS -->
+        <!-- ================================================= -->
+
+        <section
+            id="reportsPage"
+            class="page"
+        >
+
+            <div class="page-intro">
+
+                <div>
+                    <span class="section-label">DOCUMENTS</span>
+
+                    <h2>Meeting Reports</h2>
+
+                    <p>
+                        Professional AI-generated reports from your meetings.
+                    </p>
+                </div>
+
+            </div>
+
+            <div
+                id="reportsList"
+                class="reports-list"
+            >
+
+                <div class="loading-state">
+                    Loading reports...
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ================================================= -->
+        <!-- REPORT VIEW -->
+        <!-- ================================================= -->
+
+        <section
+            id="reportViewPage"
+            class="page"
+        >
+
+            <button
+                id="backToReports"
+                class="back-btn"
+            >
+                ← Back to Reports
+            </button>
+
+            <div
+                id="reportContent"
+                class="professional-report"
+            ></div>
+
+        </section>
+
+    </main>
+
+</div>
+
+
+<script
+    src="{{ url_for('static', filename='js/app.js') }}"
+></script>
+
+</body>
+</html>
