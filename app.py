@@ -9,6 +9,7 @@ from datetime import datetime
 
 app = Flask(__name__)
 
+
 # ============================================================
 # CONFIGURATION
 # ============================================================
@@ -16,8 +17,14 @@ app = Flask(__name__)
 OLLAMA_URL = "http://localhost:11434/api/chat"
 OLLAMA_MODEL = "llama3.2"
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATABASE = os.path.join(BASE_DIR, "meeting_history.db")
+BASE_DIR = os.path.dirname(
+    os.path.abspath(__file__)
+)
+
+DATABASE = os.path.join(
+    BASE_DIR,
+    "meeting_history.db"
+)
 
 
 # ============================================================
@@ -25,15 +32,20 @@ DATABASE = os.path.join(BASE_DIR, "meeting_history.db")
 # ============================================================
 
 def get_db_connection():
-    connection = sqlite3.connect(DATABASE)
+    connection = sqlite3.connect(
+        DATABASE
+    )
+
     connection.row_factory = sqlite3.Row
+
     return connection
 
 
 def initialize_database():
     connection = get_db_connection()
 
-    connection.execute("""
+    connection.execute(
+        """
         CREATE TABLE IF NOT EXISTS meetings (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             title TEXT NOT NULL,
@@ -41,7 +53,8 @@ def initialize_database():
             transcript TEXT NOT NULL,
             summary TEXT NOT NULL
         )
-    """)
+        """
+    )
 
     connection.commit()
     connection.close()
@@ -73,14 +86,19 @@ print("Whisper model loaded.")
 
 @app.route("/")
 def home():
-    return render_template("index.html")
+    return render_template(
+        "index.html"
+    )
 
 
 # ============================================================
 # LIVE TRANSCRIPTION
 # ============================================================
 
-@app.route("/api/transcribe-chunk", methods=["POST"])
+@app.route(
+    "/api/transcribe-chunk",
+    methods=["POST"]
+)
 def transcribe_chunk():
 
     if "audio" not in request.files:
@@ -97,6 +115,11 @@ def transcribe_chunk():
             "error": "Empty audio chunk."
         }), 400
 
+    segment_id = request.form.get(
+        "segment_id",
+        "unknown"
+    )
+
     temp_path = None
 
     try:
@@ -106,30 +129,45 @@ def transcribe_chunk():
             suffix=".webm"
         ) as temp_file:
 
-            audio_file.save(temp_file.name)
+            audio_file.save(
+                temp_file.name
+            )
+
             temp_path = temp_file.name
 
-        file_size = os.path.getsize(temp_path)
+        file_size = os.path.getsize(
+            temp_path
+        )
 
         print(
-            f"Live audio chunk received. "
+            f"Live audio segment "
+            f"{segment_id} received. "
             f"Size: {file_size} bytes"
         )
 
         if file_size < 1000:
-
             return jsonify({
                 "success": True,
+                "segment_id": segment_id,
                 "transcript": ""
             })
 
-        print("Starting Whisper transcription...")
+        print(
+            f"Starting Whisper transcription "
+            f"for segment {segment_id}..."
+        )
 
         segments, info = whisper_model.transcribe(
             temp_path,
             beam_size=5,
             vad_filter=True,
-            language="en"
+            vad_parameters={
+                "min_silence_duration_ms": 350,
+                "speech_pad_ms": 300
+            },
+            language="en",
+            condition_on_previous_text=False,
+            temperature=0.0
         )
 
         transcript_parts = []
@@ -139,33 +177,46 @@ def transcribe_chunk():
             text = segment.text.strip()
 
             if text:
-                transcript_parts.append(text)
+                transcript_parts.append(
+                    text
+                )
 
-        transcript = " ".join(transcript_parts).strip()
+        transcript = " ".join(
+            transcript_parts
+        ).strip()
 
         print(
-            "Chunk transcription:",
-            transcript if transcript else "[no speech]"
+            f"Segment {segment_id} transcription:",
+            transcript
+            if transcript
+            else "[no speech]"
         )
 
         return jsonify({
             "success": True,
+            "segment_id": segment_id,
             "transcript": transcript
         })
 
     except Exception as e:
 
-        print("TRANSCRIPTION ERROR:", repr(e))
+        print(
+            "TRANSCRIPTION ERROR:",
+            repr(e)
+        )
 
         return jsonify({
             "success": False,
+            "segment_id": segment_id,
             "error": str(e)
         }), 500
 
     finally:
 
-        if temp_path and os.path.exists(temp_path):
-
+        if (
+            temp_path and
+            os.path.exists(temp_path)
+        ):
             try:
                 os.remove(temp_path)
             except Exception:
@@ -176,7 +227,10 @@ def transcribe_chunk():
 # AI SUMMARY
 # ============================================================
 
-@app.route("/api/generate-summary", methods=["POST"])
+@app.route(
+    "/api/generate-summary",
+    methods=["POST"]
+)
 def generate_summary_route():
 
     data = request.get_json()
@@ -187,7 +241,10 @@ def generate_summary_route():
             "error": "No data received."
         }), 400
 
-    transcript = data.get("transcript", "").strip()
+    transcript = data.get(
+        "transcript",
+        ""
+    ).strip()
 
     if not transcript:
         return jsonify({
@@ -197,9 +254,13 @@ def generate_summary_route():
 
     try:
 
-        print("Generating structured AI summary...")
+        print(
+            "Generating structured AI summary..."
+        )
 
-        summary = generate_summary(transcript)
+        summary = generate_summary(
+            transcript
+        )
 
         return jsonify({
             "success": True,
@@ -208,7 +269,10 @@ def generate_summary_route():
 
     except Exception as e:
 
-        print("SUMMARY ERROR:", repr(e))
+        print(
+            "SUMMARY ERROR:",
+            repr(e)
+        )
 
         return jsonify({
             "success": False,
@@ -253,7 +317,7 @@ Rules:
 7. Keep everything concise.
 8. Return ONLY JSON.
 9. Do not use Markdown.
-10. Do not use ```.
+10. Do not use code fences.
 
 MEETING TRANSCRIPT:
 
@@ -262,6 +326,7 @@ MEETING TRANSCRIPT:
 
     payload = {
         "model": OLLAMA_MODEL,
+
         "messages": [
             {
                 "role": "system",
@@ -276,15 +341,20 @@ MEETING TRANSCRIPT:
                 "content": prompt
             }
         ],
+
         "stream": False,
+
         "keep_alive": "30m",
+
         "options": {
             "temperature": 0.1,
             "num_predict": 700
         }
     }
 
-    print("Sending request to Ollama...")
+    print(
+        "Sending request to Ollama..."
+    )
 
     response = requests.post(
         OLLAMA_URL,
@@ -302,16 +372,16 @@ MEETING TRANSCRIPT:
     data = response.json()
 
     if "message" not in data:
-
         raise RuntimeError(
             f"Unexpected Ollama response: {data}"
         )
 
-    raw_summary = data["message"]["content"].strip()
+    raw_summary = (
+        data["message"]["content"]
+        .strip()
+    )
 
-    # Remove accidental markdown fences
     if raw_summary.startswith("```"):
-
         raw_summary = (
             raw_summary
             .replace("```json", "")
@@ -327,19 +397,26 @@ MEETING TRANSCRIPT:
 
     except json.JSONDecodeError:
 
-        print("Invalid JSON from Ollama:")
+        print(
+            "Invalid JSON from Ollama:"
+        )
+
         print(raw_summary)
 
-        # Try to extract JSON
         start = raw_summary.find("{")
         end = raw_summary.rfind("}")
 
-        if start != -1 and end != -1:
+        if (
+            start != -1 and
+            end != -1
+        ):
 
             try:
 
                 structured_summary = json.loads(
-                    raw_summary[start:end + 1]
+                    raw_summary[
+                        start:end + 1
+                    ]
                 )
 
             except Exception:
@@ -354,7 +431,9 @@ MEETING TRANSCRIPT:
                 "Ollama returned invalid JSON."
             )
 
-    return normalize_summary(structured_summary)
+    return normalize_summary(
+        structured_summary
+    )
 
 
 # ============================================================
@@ -401,22 +480,40 @@ def normalize_summary(summary):
         []
     )
 
-    if not isinstance(main_topics, list):
+    if not isinstance(
+        main_topics,
+        list
+    ):
         main_topics = []
 
-    if not isinstance(key_points, list):
+    if not isinstance(
+        key_points,
+        list
+    ):
         key_points = []
 
-    if not isinstance(decisions, list):
+    if not isinstance(
+        decisions,
+        list
+    ):
         decisions = []
 
-    if not isinstance(action_items, list):
+    if not isinstance(
+        action_items,
+        list
+    ):
         action_items = []
 
-    if not isinstance(deadlines, list):
+    if not isinstance(
+        deadlines,
+        list
+    ):
         deadlines = []
 
-    if not isinstance(keywords, list):
+    if not isinstance(
+        keywords,
+        list
+    ):
         keywords = []
 
     cleaned_actions = []
@@ -448,22 +545,36 @@ def normalize_summary(summary):
             })
 
     return {
-        "overview": str(overview),
+        "overview": str(
+            overview
+        ),
+
         "main_topics": [
-            str(x) for x in main_topics
+            str(x)
+            for x in main_topics
         ],
+
         "key_points": [
-            str(x) for x in key_points
+            str(x)
+            for x in key_points
         ],
+
         "decisions": [
-            str(x) for x in decisions
+            str(x)
+            for x in decisions
         ],
-        "action_items": cleaned_actions,
+
+        "action_items":
+            cleaned_actions,
+
         "deadlines": [
-            str(x) for x in deadlines
+            str(x)
+            for x in deadlines
         ],
+
         "keywords": [
-            str(x) for x in keywords
+            str(x)
+            for x in keywords
         ]
     }
 
@@ -472,13 +583,15 @@ def normalize_summary(summary):
 # SAVE MEETING
 # ============================================================
 
-@app.route("/api/meetings", methods=["POST"])
+@app.route(
+    "/api/meetings",
+    methods=["POST"]
+)
 def save_meeting():
 
     data = request.get_json()
 
     if not data:
-
         return jsonify({
             "success": False,
             "error": "No meeting data received."
@@ -499,14 +612,12 @@ def save_meeting():
     ).strip()
 
     if not transcript:
-
         return jsonify({
             "success": False,
             "error": "Transcript is empty."
         }), 400
 
     if not summary:
-
         return jsonify({
             "success": False,
             "error": "Summary is missing."
@@ -525,8 +636,11 @@ def save_meeting():
                 )
             )
 
-        created_at = datetime.now().isoformat(
-            timespec="seconds"
+        created_at = (
+            datetime.now()
+            .isoformat(
+                timespec="seconds"
+            )
         )
 
         summary_json = json.dumps(
@@ -534,7 +648,9 @@ def save_meeting():
             ensure_ascii=False
         )
 
-        connection = get_db_connection()
+        connection = (
+            get_db_connection()
+        )
 
         cursor = connection.execute(
             """
@@ -556,7 +672,8 @@ def save_meeting():
         connection.close()
 
         print(
-            f"Meeting saved with ID: {meeting_id}"
+            f"Meeting saved with ID: "
+            f"{meeting_id}"
         )
 
         return jsonify({
@@ -582,12 +699,17 @@ def save_meeting():
 # GET ALL MEETINGS
 # ============================================================
 
-@app.route("/api/meetings", methods=["GET"])
+@app.route(
+    "/api/meetings",
+    methods=["GET"]
+)
 def get_meetings():
 
     try:
 
-        connection = get_db_connection()
+        connection = (
+            get_db_connection()
+        )
 
         rows = connection.execute(
             """
@@ -609,7 +731,8 @@ def get_meetings():
             meetings.append({
                 "id": row["id"],
                 "title": row["title"],
-                "created_at": row["created_at"]
+                "created_at":
+                    row["created_at"]
             })
 
         return jsonify({
@@ -637,7 +760,9 @@ def get_meeting(meeting_id):
 
     try:
 
-        connection = get_db_connection()
+        connection = (
+            get_db_connection()
+        )
 
         row = connection.execute(
             """
@@ -671,7 +796,8 @@ def get_meeting(meeting_id):
         except Exception:
 
             summary = {
-                "overview": row["summary"],
+                "overview":
+                    row["summary"],
                 "main_topics": [],
                 "key_points": [],
                 "decisions": [],
@@ -682,14 +808,18 @@ def get_meeting(meeting_id):
 
         return jsonify({
             "success": True,
+
             "meeting": {
                 "id": row["id"],
                 "title": row["title"],
-                "created_at": row["created_at"],
-                "transcript": row["transcript"],
-                "summary": normalize_summary(
-                    summary
-                )
+                "created_at":
+                    row["created_at"],
+                "transcript":
+                    row["transcript"],
+                "summary":
+                    normalize_summary(
+                        summary
+                    )
             }
         })
 
@@ -713,7 +843,9 @@ def delete_meeting(meeting_id):
 
     try:
 
-        connection = get_db_connection()
+        connection = (
+            get_db_connection()
+        )
 
         cursor = connection.execute(
             """
@@ -749,7 +881,10 @@ def delete_meeting(meeting_id):
 # SEARCH
 # ============================================================
 
-@app.route("/api/search", methods=["GET"])
+@app.route(
+    "/api/search",
+    methods=["GET"]
+)
 def search_meetings():
 
     query = request.args.get(
@@ -766,7 +901,9 @@ def search_meetings():
 
     try:
 
-        connection = get_db_connection()
+        connection = (
+            get_db_connection()
+        )
 
         pattern = f"%{query}%"
 
@@ -797,10 +934,17 @@ def search_meetings():
 
         for row in rows:
 
-            transcript = row["transcript"]
+            transcript = row[
+                "transcript"
+            ]
 
-            lower_text = transcript.lower()
-            lower_query = query.lower()
+            lower_text = (
+                transcript.lower()
+            )
+
+            lower_query = (
+                query.lower()
+            )
 
             index = lower_text.find(
                 lower_query
@@ -815,7 +959,9 @@ def search_meetings():
 
                 end = min(
                     len(transcript),
-                    index + len(query) + 180
+                    index +
+                    len(query) +
+                    180
                 )
 
                 snippet = transcript[
@@ -829,7 +975,8 @@ def search_meetings():
             results.append({
                 "id": row["id"],
                 "title": row["title"],
-                "created_at": row["created_at"],
+                "created_at":
+                    row["created_at"],
                 "snippet": snippet
             })
 
